@@ -1,12 +1,32 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    binding_of_caller (0.7.2)
+      debug_inspector (>= 0.0.1)
+    coderay (1.1.0)
+    debug_inspector (0.0.2)
     ffi (1.9.8)
+    interception (0.5)
     libtcod (0.1.1)
       ffi (~> 1.9.3)
+    method_source (0.8.2)
+    pry (0.10.1)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
+      slop (~> 3.4)
+    pry-rescue (1.4.1)
+      interception (>= 0.5)
+      pry
+    pry-stack_explorer (0.4.9.2)
+      binding_of_caller (>= 0.7)
+      pry (>= 0.9.11)
+    slop (3.6.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   libtcod (~> 0.1)
+  pry
+  pry-rescue
+  pry-stack_explorer
