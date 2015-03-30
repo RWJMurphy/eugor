@@ -6,7 +6,7 @@ module Eugor
   class Console
     include TCOD
 
-    LIMIT_FPS = 60
+    LIMIT_FPS = 20
 
     attr_reader :width, :height
 
@@ -23,15 +23,29 @@ module Eugor
       sys_set_fps(LIMIT_FPS)
     end
 
-    def clear(player)
-      # clear
-      console_put_char(@buffer, player.x, player.y, ' '.ord, BKGND_NONE)
+    def clear(camera, map, actors)
+      frame = camera.frame(map)
+      actors.each do |actor|
+        offset = actor.location - camera.origin.to_v2
+        if offset.x >= 0 && offset.x < width && offset.y >= 0 && offset.y < height
+          terrain = frame[offset.y][offset.x]
+          putc(offset.x, offset.y, terrain)
+        end
+      end
     end
 
-    def paint(player)
+    def putc(x, y, c, color = Color::WHITE)
+      console_set_default_foreground(@buffer, color)
+      console_put_char(@buffer, x, y, c.ord, BKGND_NONE)
+    end
+
+    def paint(camera, map, actors)
       # draw
-      console_set_default_foreground(@buffer, Color::WHITE)
-      console_put_char(@buffer, player.x, player.y, '@'.ord, BKGND_NONE)
+      camera.frame(map, actors).each_with_index do |row, y|
+        row.each_with_index do |char, x|
+          putc(x, y, char)
+        end
+      end
 
       # flush
       console_blit(
@@ -45,16 +59,16 @@ module Eugor
     def events
       key = console_check_for_keypress KEY_PRESSED
       keys = []
-      while key.vk != KEY_NONE
+      until key.to_sym == :KEY_NONE
         keys << key
         key = console_check_for_keypress KEY_PRESSED
       end
-      return [console_wait_for_keypress(true)] if keys.empty?
+      return [console_wait_for_keypress(false)] if keys.empty?
       keys
     end
 
     def wait_for_keypress
-      console_wait_for_keypress true
+      console_wait_for_keypress false
     end
 
     def closed?

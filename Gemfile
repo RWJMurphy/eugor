@@ -7,3 +7,7 @@ group :development do
   gem 'pry-rescue'
   gem 'pry-stack_explorer'
 end
+
+group :test do
+  gem 'rspec'
+end

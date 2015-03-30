@@ -5,6 +5,7 @@ GEM
       debug_inspector (>= 0.0.1)
     coderay (1.1.0)
     debug_inspector (0.0.2)
+    diff-lcs (1.2.5)
     ffi (1.9.8)
     interception (0.5)
     libtcod (0.1.1)
@@ -20,6 +21,19 @@ GEM
     pry-stack_explorer (0.4.9.2)
       binding_of_caller (>= 0.7)
       pry (>= 0.9.11)
+    rspec (3.2.0)
+      rspec-core (~> 3.2.0)
+      rspec-expectations (~> 3.2.0)
+      rspec-mocks (~> 3.2.0)
+    rspec-core (3.2.2)
+      rspec-support (~> 3.2.0)
+    rspec-expectations (3.2.0)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.2.0)
+    rspec-mocks (3.2.1)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.2.0)
+    rspec-support (3.2.2)
     slop (3.6.0)
 
 PLATFORMS
@@ -30,3 +44,4 @@ DEPENDENCIES
   pry
   pry-rescue
   pry-stack_explorer
+  rspec
