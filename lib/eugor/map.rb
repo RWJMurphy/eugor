@@ -3,6 +3,8 @@ require 'eugor/rectangle'
 require 'eugor/cuboid'
 require 'eugor/vector'
 
+require 'libtcod/map'
+
 module Eugor
   class Terrain
     attr_accessor :char, :color
@@ -23,6 +25,7 @@ module Eugor
     GROUND = Terrain.new('.', Console::Color::WHITE, true).freeze
     WALL = Terrain.new('#', Console::Color::WHITE, false).freeze
     SOLID_DIRT = Terrain.new('#', Console::Color::DARK_ORANGE, false).freeze
+    TREE = Terrain.new('^', Console::Color::DARK_GREEN, false).freeze
 
   end
 
@@ -44,6 +47,21 @@ module Eugor
       @height = height
       @terrains = (0...height).map { (0...depth).map { (0...width).map { Terrain::NULL } } }
       self
+    end
+
+    def fovmap(z)
+      @fovmap ||= {}
+      @fovmap[z] ||= begin
+        layer = @terrains[z]
+        fovmap = TCOD::Map.new(width, depth)
+        depth.times do |y|
+          width.times do |x|
+            terrain = layer[y][x]
+            fovmap.set_properties(x, y, terrain.crossable?, terrain.crossable?)
+          end
+        end
+        fovmap
+      end
     end
 
     def [](v)
@@ -92,7 +110,11 @@ module Eugor
               when underground
                 Terrain::SOLID_DIRT
               when surface
-                Terrain::GROUND
+                if rand(100) < 20
+                  Terrain::TREE
+                else
+                  Terrain::GROUND
+                end
               when air
                 Terrain::AIR
               end

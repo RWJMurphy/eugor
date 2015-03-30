@@ -18,21 +18,23 @@ module Eugor
     def initialize
       @map = Maps.forest
 
-
       @console = Console.new(SCREEN_WIDTH, SCREEN_HEIGHT)
+      @player = Player.new('@', Console::Color::WHITE)
+      @player.location = Vector.v3(128 / 2, 128 / 2, 8)
+
       @camera = Camera.new(
+        @player,
         Vector.v3((128 - SCREEN_WIDTH) / 2, (128 - SCREEN_HEIGHT) / 2, 8),
         SCREEN_WIDTH, SCREEN_HEIGHT
       )
-
-      @player = Player.new('@', Console::Color::WHITE)
-      @player.location = Vector.v3(128 / 2, 128 / 2, 8)
 
       npc = Actor.new('@', Console::Color::YELLOW)
       npc.location = Vector.v3(128 / 2 + 5, 128 / 2, 8)
 
       @actors = [@player, npc]
       @state = :STATE_PLAYER_TURN
+
+      @tick = 0
 
       self
     end
@@ -79,6 +81,7 @@ module Eugor
       when :STATE_WORLD_TURN
         case event
         when :WORLD_TURN_ENDED
+          @tick += 1
           next_state = :STATE_PLAYER_TURN
         end
       end
@@ -104,8 +107,7 @@ module Eugor
           end
         when :STATE_WORLD_TURN
           @actors
-            .reject { |actor| actor == @player }
-            .each { |actor| actor.tick(@map) }
+            .each { |actor| actor.tick(@tick, @map) }
           handle_game_event(:WORLD_TURN_ENDED)
         end
       end
