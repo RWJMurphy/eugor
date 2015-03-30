@@ -26,10 +26,10 @@ module Eugor
     def clear(camera, map, actors)
       frame = camera.frame(map)
       actors.each do |actor|
-        offset = actor.location - camera.origin.to_v2
+        offset = actor.location - camera.origin
         if offset.x >= 0 && offset.x < width && offset.y >= 0 && offset.y < height
-          terrain = frame[offset.y][offset.x]
-          putc(offset.x, offset.y, terrain)
+          tile = frame[offset.y][offset.x]
+          putc(offset.x, offset.y, tile[0], tile[1])
         end
       end
     end
@@ -42,8 +42,8 @@ module Eugor
     def paint(camera, map, actors)
       # draw
       camera.frame(map, actors).each_with_index do |row, y|
-        row.each_with_index do |char, x|
-          putc(x, y, char)
+        row.each_with_index do |tile, x|
+          putc(x, y, tile[0], tile[1])
         end
       end
 

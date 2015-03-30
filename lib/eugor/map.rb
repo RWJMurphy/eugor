@@ -1,4 +1,6 @@
 require 'eugor/console'
+require 'eugor/rectangle'
+require 'eugor/cuboid'
 require 'eugor/vector'
 
 module Eugor
@@ -17,8 +19,11 @@ module Eugor
     end
 
     NULL = Terrain.new(' ', Console::Color::BLACK, false).freeze
+    AIR = Terrain.new(' ', Console::Color::BLUE, false).freeze
     GROUND = Terrain.new('.', Console::Color::WHITE, true).freeze
     WALL = Terrain.new('#', Console::Color::WHITE, false).freeze
+    SOLID_DIRT = Terrain.new('#', Console::Color::DARK_ORANGE, false).freeze
+
   end
 
   class Chunk
@@ -66,6 +71,37 @@ module Eugor
 
     def []=(v, chunk)
       @chunks[v.x][v.y] = chunk
+    end
+  end
+
+  module Maps
+    class << self
+      def forest
+        map = Map.new(1, 1)
+        chunk = map[Vector.v2(0, 0)]
+
+        underground = Cuboid.new(Vector.v3(0, 0, 0), 128, 128, 8)
+        surface = Cuboid.new(Vector.v3(0, 0, 8), 128, 128, 1)
+        air = Cuboid.new(Vector.v3(0, 0, 8), 128, 128, 7)
+
+        chunk.height.times do |z|
+          chunk.depth.times do |y|
+            chunk.width.times do |x|
+              o = Vector.v3(x, y, z)
+              chunk[o] = case o
+              when underground
+                Terrain::SOLID_DIRT
+              when surface
+                Terrain::GROUND
+              when air
+                Terrain::AIR
+              end
+            end
+          end
+        end
+
+        map
+      end
     end
   end
 end

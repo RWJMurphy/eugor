@@ -1,3 +1,5 @@
+require 'libtcod'
+
 module TCOD
   class Key
 
@@ -14,13 +16,13 @@ module TCOD
                  .to_h
 
     def to_sym
-      if KEY_TO_SYM.key? vk
-        KEY_TO_SYM[vk]
-      elsif c != "\x00"
-        CHAR_TO_SYM[c]
+      if vk == TCOD::KEY_CHAR
+        sym = CHAR_TO_SYM[c] || c.to_sym
       else
-        fail TypeError
+        sym = KEY_TO_SYM[vk]
       end
+      fail TypeError if sym.nil?
+      sym
     end
 
   end

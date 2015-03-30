@@ -16,46 +16,20 @@ module Eugor
     SCREEN_HEIGHT = 50
 
     def initialize
-      @map = Map.new(1, 1) # 1x1 chunks = 128x128x16 terrains
-
-      chunk = @map[v2(0, 0)]
-      offset = v3(128, 128, 0) / 2 - v3(5, 5, 0)
-      [
-        "##########",
-        "#........#",
-        "#........#",
-        "#........#",
-        "#........#",
-        "#........#",
-        "#........#",
-        "#........#",
-        "#........#",
-        "##########"
-      ].each_with_index do |line, y|
-        line.chars.each_with_index do |c, x|
-          chunk[offset + v3(x, y, 0)] = case c
-          when '#'
-            Terrain::WALL
-          when '.'
-            Terrain::GROUND
-          else
-            Terrain::NULL
-          end
-        end
-      end
+      @map = Maps.forest
 
 
       @console = Console.new(SCREEN_WIDTH, SCREEN_HEIGHT)
       @camera = Camera.new(
-        v3((128 - SCREEN_WIDTH) / 2, (128 - SCREEN_HEIGHT) / 2, 0),
+        Vector.v3((128 - SCREEN_WIDTH) / 2, (128 - SCREEN_HEIGHT) / 2, 8),
         SCREEN_WIDTH, SCREEN_HEIGHT
       )
 
       @player = Player.new('@', Console::Color::WHITE)
-      @player.location = v2(128 / 2, 128 / 2)
+      @player.location = Vector.v3(128 / 2, 128 / 2, 8)
 
       npc = Actor.new('@', Console::Color::YELLOW)
-      npc.location = v2(128 / 2 + 5, 128 / 2)
+      npc.location = Vector.v3(128 / 2 + 5, 128 / 2, 8)
 
       @actors = [@player, npc]
       @state = :STATE_PLAYER_TURN
@@ -68,13 +42,17 @@ module Eugor
       when :KEY_ESCAPE
         [:PLAYER_QUIT]
       when :KEY_UP
-        [:PLAYER_MOVE, v2(0, -1)]
+        [:PLAYER_MOVE, Vector.v3(0, -1, 0)]
       when :KEY_DOWN
-        [:PLAYER_MOVE, v2(0, 1)]
+        [:PLAYER_MOVE, Vector.v3(0, 1, 0)]
       when :KEY_LEFT
-        [:PLAYER_MOVE, v2(-1, 0)]
+        [:PLAYER_MOVE, Vector.v3(-1, 0, 0)]
       when :KEY_RIGHT
-        [:PLAYER_MOVE, v2(1, 0)]
+        [:PLAYER_MOVE, Vector.v3(1, 0, 0)]
+      when :<
+        [:CAMERA_MOVE, Vector.v3(0, 0, 1)]
+      when :>
+        [:CAMERA_MOVE, Vector.v3(0, 0, -1)]
       else
         [:UNHANDLED_KEY, event]
       end
@@ -89,6 +67,9 @@ module Eugor
         when :PLAYER_MOVE
           @player.location += arg
           next_state = :STATE_WORLD_TURN
+        when :CAMERA_MOVE
+          @camera.origin += arg
+          next_state = @state
         when :PLAYER_QUIT
           next_state = :STATE_QUIT
         when :UNHANDLED_KEY

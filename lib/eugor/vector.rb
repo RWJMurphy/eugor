@@ -9,6 +9,7 @@ module Eugor
       end
 
       def +(other)
+        fail TypeError unless other.is_a? V2
         V2.new(x + other.x, y + other.y)
       end
 
@@ -17,6 +18,7 @@ module Eugor
       end
 
       def *(other)
+        fail TypeError unless other.is_a? Numeric
         V2.new(other * x, other * y)
       end
 
@@ -25,10 +27,12 @@ module Eugor
       end
 
       def /(other)
+        fail TypeError unless other.is_a? Numeric
         V2.new(x / other, y / other)
       end
 
       def ==(other)
+        return false unless other.is_a? V2
         other.x == x && other.y == y
       end
 
@@ -47,6 +51,7 @@ module Eugor
       end
 
       def +(other)
+        fail TypeError unless other.is_a? V3
         V3.new(x + other.x, y + other.y, z + other.z)
       end
 
@@ -69,6 +74,7 @@ module Eugor
       end
 
       def ==(other)
+        return false unless other.is_a? V3
         other.x == x && other.y == y && other.z == z
       end
 
@@ -77,12 +83,14 @@ module Eugor
       end
     end
 
-    def v2(x, y)
-      V2.new(x, y)
-    end
+    class << self
+      def v2(x, y)
+        V2.new(x, y)
+      end
 
-    def v3(x, y, z)
-      V3.new(x, y, z)
+      def v3(x, y, z)
+        V3.new(x, y, z)
+      end
     end
   end
 end
