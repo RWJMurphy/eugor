@@ -26,4 +26,12 @@ module TCOD
     end
 
   end
+
+  class Color
+    alias_method :inspect, :to_s
+
+    def scale_hsv(sscale, vscale)
+      TCOD.color_scale_HSV(self, sscale, vscale)
+    end
+  end
 end

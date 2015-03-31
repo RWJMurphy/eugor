@@ -8,6 +8,14 @@ module Eugor
         @y = y
       end
 
+      def inspect
+        "<#{self.class.name} #{self.to_s}>"
+      end
+
+      def to_s
+        "(#{x}, #{y})"
+      end
+
       def +(other)
         fail TypeError unless other.is_a? V2
         V2.new(x + other.x, y + other.y)
@@ -35,6 +43,11 @@ module Eugor
         return false unless other.is_a? V2
         other.x == x && other.y == y
       end
+      alias_method :eql?, :==
+
+      def hash
+        [x, y].hash
+      end
 
       def to_v3
         V3.new(x, y, 0)
@@ -48,6 +61,14 @@ module Eugor
         @y = y
         @z = z
         self
+      end
+
+      def inspect
+        "<#{self.class.name} #{self.to_s}>"
+      end
+
+      def to_s
+        "(#{x}, #{y}, #{z})"
       end
 
       def +(other)
@@ -76,6 +97,11 @@ module Eugor
       def ==(other)
         return false unless other.is_a? V3
         other.x == x && other.y == y && other.z == z
+      end
+      alias_method :eql?, :==
+
+      def hash
+        [x, y, z].hash
       end
 
       def to_v2

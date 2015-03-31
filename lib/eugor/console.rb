@@ -29,6 +29,7 @@ module Eugor
         offset = actor.location - camera.origin
         if offset.x >= 0 && offset.x < width && offset.y >= 0 && offset.y < height
           tile = frame[offset.y][offset.x]
+          tile = [' ', Color::BLACK] if tile.nil?
           putc(offset.x, offset.y, tile[0], tile[1])
         end
       end
@@ -43,6 +44,7 @@ module Eugor
       # draw
       camera.frame(map, actors).each_with_index do |row, y|
         row.each_with_index do |tile, x|
+          tile = [' ', Color::BLACK] if tile.nil?
           putc(x, y, tile[0], tile[1])
         end
       end

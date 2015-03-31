@@ -20,16 +20,16 @@ module Eugor
 
       @console = Console.new(SCREEN_WIDTH, SCREEN_HEIGHT)
       @player = Player.new('@', Console::Color::WHITE)
-      @player.location = Vector.v3(128 / 2, 128 / 2, 8)
+      @player.location = Vector.v3(128 / 2, 128 / 2, 32)
 
       @camera = Camera.new(
         @player,
-        Vector.v3((128 - SCREEN_WIDTH) / 2, (128 - SCREEN_HEIGHT) / 2, 8),
+        Vector.v3((128 - SCREEN_WIDTH) / 2, (128 - SCREEN_HEIGHT) / 2, 32),
         SCREEN_WIDTH, SCREEN_HEIGHT
       )
 
       npc = Actor.new('@', Console::Color::YELLOW)
-      npc.location = Vector.v3(128 / 2 + 5, 128 / 2, 8)
+      npc.location = Vector.v3(128 / 2 + 5, 128 / 2, 32)
 
       @actors = [@player, npc]
       @state = :STATE_PLAYER_TURN

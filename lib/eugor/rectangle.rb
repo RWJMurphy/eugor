@@ -9,12 +9,20 @@ module Eugor
       @depth = depth
     end
 
+    def inspect
+      "<#{self.class.name} #{@origin}, #{size}>"
+    end
+
     def translate(v2)
       @origin += v2
     end
 
+    def size
+      Vector.v2(width, depth)
+    end
+
     def northeast
-      origin + Vector.v2(width, depth)
+      origin + size
     end
 
     def include?(v2)

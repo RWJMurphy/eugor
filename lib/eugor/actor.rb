@@ -35,5 +35,8 @@ module Eugor
       @location += v3
     end
 
+    def inspect
+      "<#{self.class.name} #{char}, #{color}>"
+    end
   end
 end

@@ -10,12 +10,34 @@ module Eugor
       @height = height
     end
 
+    def inspect
+      "<#{self.class.name} #{@origin}, #{size}>"
+    end
+
+    def translate(v3)
+      @origin += v3
+    end
+
+    def size
+      Vector.v3(width, depth, height)
+    end
+
     def translate(v3)
       @origin += v3
     end
 
     def topnortheast
       origin + Vector.v3(width, depth, height)
+    end
+
+    def each(&block)
+      height.times do |z|
+        depth.times do |y|
+          width.times do |x|
+            yield origin + Vector.v3(x, y, z)
+          end
+        end
+      end
     end
 
     def include?(v3)
