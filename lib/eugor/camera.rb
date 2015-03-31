@@ -16,18 +16,17 @@ module Eugor
 
     def frame(map, actors = {})
       fov = @pov.fov(map)
-      chunk = map.active_chunk
 
       frame_ = depth.times.map do |y|
         width.times.map do |x|
           char = nil
           color = nil
-          0.downto(-origin.z).each do |z|
+          0.downto(-4).each do |z|
             coord = origin + Vector.v3(x, y, z)
             # next unless fov.in_fov?(coord.x, coord.y)
 
             actor = actors[coord]
-            terrain = chunk[coord]
+            terrain = map[coord]
             if actor
               char = actor.char
               color = actor.color.clone
@@ -37,7 +36,8 @@ module Eugor
             end
             next if char == ' '
             color *= 0.5 unless terrain.lit
-            color.scale_hsv(1.0, 1.0 + z * 0.5)
+            svalue = 2**z
+            color.scale_hsv(1.0, svalue)
             break
           end
           [char, color]

@@ -69,7 +69,7 @@ module Eugor
         when :ACTOR_MOVE
           delta = args.first
           target = @player.location + delta
-          if @map.active_chunk[target].walkable?
+          if @map[target].walkable?
             @actors.delete(@player.location)
             @player.location += delta
             @actors[@player.location] = @player
@@ -96,7 +96,7 @@ module Eugor
         when :ACTOR_MOVE
           actor, delta = args
           target = actor.location + delta
-          destination = @map.active_chunk[target]
+          destination = @map[target]
           if destination.walkable?
             @actors.delete(actor.location)
             actor.location += delta

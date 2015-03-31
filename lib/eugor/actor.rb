@@ -24,7 +24,7 @@ module Eugor
 
     def fov(map)
       @fovmap ||= begin
-        chunk = map.active_chunk
+        chunk = map.chunk_for(location)
         fovmap = chunk.fovmap(z).clone
         fovmap.compute_fov(x, y, 0, true, TCOD::FOV_SHADOW)
         fovmap

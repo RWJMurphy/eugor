@@ -45,21 +45,22 @@ module Eugor
   end
 
   class Chunk
-    attr_accessor :width, :depth, :height
-    def initialize(width, depth, height)
+    attr_reader :width, :depth, :height, :offset
+    def initialize(width, depth, height, offset=Vector.v2(0, 0))
       @width = width
       @depth = depth
       @height = height
+      @offset = offset
       @terrains = (0...height).map { (0...depth).map { (0...width).map { Terrain::NULL } } }
       self
     end
 
     def inspect
-      "<#{self.class.name} #{size}}>"
+      "<#{self.class.name} #{size}@#{offset}}>"
     end
 
     def size
-      Vector.v3(width, depth, height)
+      @size ||= Vector.v3(width, depth, height)
     end
 
     def fovmap(z)
@@ -109,36 +110,34 @@ module Eugor
       end
     end
 
-    def [](v)
-      @terrains[v.z][v.y][v.x]
+    def [](v3)
+      fail IndexError unless v3.z >= 0 && v3.z < height &&
+                             v3.y >= 0 && v3.y < depth &&
+                             v3.x >= 0 && v3.x < width
+      @terrains[v3.z][v3.y][v3.x]
     end
 
-    def []=(v, terrain)
-      fail IndexError unless v.z >= 0 && v.z < height &&
-                             v.y >= 0 && v.y < depth &&
-                             v.x >= 0 && v.x < width
-      @terrains[v.z][v.y][v.x] = terrain
+    def []=(v3, terrain)
+      fail IndexError unless v3.z >= 0 && v3.z < height &&
+                             v3.y >= 0 && v3.y < depth &&
+                             v3.x >= 0 && v3.x < width
+      @terrains[v3.z][v3.y][v3.x] = terrain
     end
   end
 
   class Map
-    CHUNK_SIZE = {
-      width: 128,
-      depth: 128,
-      height: 64
-    }
+    CHUNK_SIZE = Vector.v3(128, 128, 64)
 
-    attr_reader :width, :depth, :active_chunk
+    attr_reader :width, :depth
 
     def initialize(width, depth)
       @width = width
-      @height = depth
-      @chunks = width.times.map do
-        depth.times.map do
-          Chunk.new(CHUNK_SIZE[:width], CHUNK_SIZE[:depth], CHUNK_SIZE[:height])
+      @depth = depth
+      @chunks = width.times.map do |x|
+        depth.times.map do |y|
+          Chunk.new(CHUNK_SIZE.x, CHUNK_SIZE.y, CHUNK_SIZE.z, Vector.v2(x, y))
         end
       end
-      @active_chunk = self[Vector.v2(0, 0)]
       self
     end
 
@@ -146,17 +145,45 @@ module Eugor
       "<#{self.class.name} (#{chunks.first.size},#{chunks.size})>"
     end
 
-    def [](v)
-      @chunks[v.x][v.y]
+    def size
+      @size ||= Vector.v2(width, depth)
     end
 
-    def []=(v, chunk)
-      @chunks[v.x][v.y] = chunk
+    def chunk_for(v3)
+      chunk_index = v3 / CHUNK_SIZE
+      fail IndexError unless chunk_index.x >= 0 && chunk_index.x < width &&
+                             chunk_index.y >= 0 && chunk_index.y < depth
+      @chunks[chunk_index.x][chunk_index.y]
+    end
+
+    def each_chunk_index(&block)
+      width.times do |x|
+        depth.times do |y|
+          yield Vector.v2(x, y)
+        end
+      end
+    end
+
+    def each_chunk
+      each_chunk_index do |chunk_index|
+        yield @chunks[chunk_index.x][chunk_index.y]
+      end
+    end
+
+    def [](v3)
+      chunk_offset = v3 % CHUNK_SIZE
+      chunk_for(v3)[chunk_offset]
+    end
+
+    def []=(v3, chunk)
+      chunk_offset = v3 % CHUNK_SIZE
+      chunk_for(v3)[chunk_offset] = chunk
     end
   end
 
   class TerrainFeature < Chunk
-    def blit(otherChunk, offset)
+    def blit(otherChunk, offset = nil)
+      offset ||= @offset
       each do |o, t|
         begin
           otherChunk[o + offset] = t.clone unless t.nil?
@@ -171,7 +198,6 @@ module Eugor
     class << self
       def forest
         map = Map.new(1, 1)
-        chunk = map.active_chunk
 
         blocks = [
           [Cuboid.new(Vector.v3(0, 0, 0), 128, 128, 32), Terrain::SOLID_DIRT],
@@ -181,7 +207,7 @@ module Eugor
 
         blocks.each do |block, terrain|
           block.each do |v3|
-            chunk[v3] = terrain.clone
+            map[v3] = terrain.clone
           end
         end
 
@@ -213,17 +239,17 @@ module Eugor
           pine
         end
 
-        chunk.depth.times do |y|
-          chunk.width.times do |x|
+        Map::CHUNK_SIZE.y.times do |y|
+          Map::CHUNK_SIZE.x.times do |x|
             if rand(100) < 20
               pine = make_pine.call(3, 3, 30 - rand(15))
               o = Vector.v3(x, y, 32) - Vector.v3(pine.width / 2, pine.height / 2, 0)
-              pine.blit(chunk, o)
+              pine.blit(map, o)
             end
           end
         end
 
-        chunk.calculate_lighting
+        map.each_chunk(&:calculate_lighting)
         map
       end
     end

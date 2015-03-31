@@ -34,6 +34,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.2.0)
     rspec-support (3.2.2)
+    ruby-prof (0.15.6)
     slop (3.6.0)
 
 PLATFORMS
@@ -45,3 +46,4 @@ DEPENDENCIES
   pry-rescue
   pry-stack_explorer
   rspec
+  ruby-prof

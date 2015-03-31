@@ -6,6 +6,7 @@ group :development do
   gem 'pry'
   gem 'pry-rescue'
   gem 'pry-stack_explorer'
+  gem 'ruby-prof'
 end
 
 group :test do

@@ -26,8 +26,14 @@ module Eugor
       end
 
       def *(other)
-        fail TypeError unless other.is_a? Numeric
-        V2.new(other * x, other * y)
+        case other
+        when Numeric
+          V2.new(x * other, y * other)
+        when V2
+          V2.new(x * other.x, y * other.y)
+        else
+          fail TypeError
+        end
       end
 
       def -@
@@ -35,8 +41,14 @@ module Eugor
       end
 
       def /(other)
-        fail TypeError unless other.is_a? Numeric
-        V2.new(x / other, y / other)
+        case other
+        when Numeric
+          V2.new(x / other, y / other)
+        when V2
+          V2.new(x / other.x, y / other.y)
+        else
+          fail TypeError
+        end
       end
 
       def ==(other)
@@ -81,8 +93,25 @@ module Eugor
       end
 
       def *(other)
-        fail TypeError unless other.is_a? Numeric
-        V3.new(other * x, other * y, other * z)
+        case other
+        when Numeric
+          V3.new(x * other, y * other, z * other)
+        when V3
+          V3.new(x * other.x, y * other.y, z * other.z)
+        else
+          fail TypeError
+        end
+      end
+
+      def %(other)
+        case other
+        when Numeric
+          V3.new(x % other, y % other, z % other)
+        when V3
+          V3.new(x % other.x, y % other.y, z % other.z)
+        else
+          fail TypeError
+        end
       end
 
       def -@
@@ -90,8 +119,14 @@ module Eugor
       end
 
       def /(other)
-        fail TypeError unless other.is_a? Numeric
-        V3.new(x / other, y / other, z / other)
+        case other
+        when Numeric
+          V3.new(x / other, y / other, z / other)
+        when V3
+          V3.new(x / other.x, y / other.y, z / other.z)
+        else
+          fail TypeError
+        end
       end
 
       def ==(other)
