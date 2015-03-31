@@ -14,11 +14,9 @@ module Eugor
       self
     end
 
-    def frame(map, actors = [])
+    def frame(map, actors = {})
       fov = @pov.fov(map)
-      chunk = map[Vector.v2(0, 0)]
-
-      actor_hash = actors.map { |a| [a.location, a] }.to_h
+      chunk = map.active_chunk
 
       frame_ = depth.times.map do |y|
         width.times.map do |x|
@@ -26,10 +24,9 @@ module Eugor
           color = nil
           0.downto(-origin.z).each do |z|
             coord = origin + Vector.v3(x, y, z)
-            binding.pry if coord == Vector.v3(64, 64, 32)
             # next unless fov.in_fov?(coord.x, coord.y)
 
-            actor = actor_hash[coord]
+            actor = actors[coord]
             terrain = chunk[coord]
             if actor
               char = actor.char

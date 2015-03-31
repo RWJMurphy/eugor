@@ -6,7 +6,6 @@ require 'eugor/player'
 require 'eugor/vector'
 
 require 'libtcod'
-require 'pry'
 
 module Eugor
   class Game
@@ -31,7 +30,7 @@ module Eugor
       npc = Actor.new('@', Console::Color::YELLOW)
       npc.location = Vector.v3(128 / 2 + 5, 128 / 2, 32)
 
-      @actors = [@player, npc]
+      @actors = [@player, npc].map{ |actor| [actor.location, actor] }.to_h
       @state = :STATE_PLAYER_TURN
 
       @tick = 0
@@ -44,13 +43,13 @@ module Eugor
       when :KEY_ESCAPE
         [:PLAYER_QUIT]
       when :KEY_UP
-        [:PLAYER_MOVE, Vector.v3(0, -1, 0)]
+        [:ACTOR_MOVE, Vector.v3(0, -1, 0)]
       when :KEY_DOWN
-        [:PLAYER_MOVE, Vector.v3(0, 1, 0)]
+        [:ACTOR_MOVE, Vector.v3(0, 1, 0)]
       when :KEY_LEFT
-        [:PLAYER_MOVE, Vector.v3(-1, 0, 0)]
+        [:ACTOR_MOVE, Vector.v3(-1, 0, 0)]
       when :KEY_RIGHT
-        [:PLAYER_MOVE, Vector.v3(1, 0, 0)]
+        [:ACTOR_MOVE, Vector.v3(1, 0, 0)]
       when :<
         [:CAMERA_MOVE, Vector.v3(0, 0, 1)]
       when :>
@@ -61,31 +60,57 @@ module Eugor
       game_event
     end
 
-    def handle_game_event(event, arg = nil)
+    def handle_game_event(game_event)
       next_state = nil
+      event_type, *args = game_event
       case @state
       when :STATE_PLAYER_TURN
-        case event
-        when :PLAYER_MOVE
-          @player.location += arg
-          next_state = :STATE_WORLD_TURN
+        case event_type
+        when :ACTOR_MOVE
+          delta = args.first
+          target = @player.location + delta
+          if @map.active_chunk[target].walkable?
+            @actors.delete(@player.location)
+            @player.location += delta
+            @actors[@player.location] = @player
+            next_state = :STATE_WORLD_TURN
+          else
+            STDERR.puts "bump"
+            next_state = @state
+          end
         when :CAMERA_MOVE
-          @camera.origin += arg
+          delta = args.first
+          @camera.origin += delta
           next_state = @state
         when :PLAYER_QUIT
           next_state = :STATE_QUIT
         when :UNHANDLED_KEY
-          STDERR.puts("Unhandled key: #{arg.c}")
+          key = args.first
+          STDERR.puts("Unhandled key: #{key.c}")
           next_state = @state
         end
       when :STATE_WORLD_TURN
-        case event
+        case event_type
+        when :ACTOR_NONE
+          next_state = :STATE_WORLD_TURN
+        when :ACTOR_MOVE
+          actor, delta = args
+          target = actor.location + delta
+          destination = @map.active_chunk[target]
+          if destination.walkable?
+            @actors.delete(actor.location)
+            actor.location += delta
+            @actors[actor.location] = actor
+          else
+            STDERR.puts("#{actor} bumps into #{destination}")
+          end
+          next_state = :STATE_WORLD_TURN
         when :WORLD_TURN_ENDED
           @tick += 1
           next_state = :STATE_PLAYER_TURN
         end
       end
-      fail "#{@state} can't handle #{event}!" unless next_state
+      fail "#{@state} can't handle #{event_type}!" unless next_state
       @state = next_state
     end
 
@@ -96,18 +121,18 @@ module Eugor
           @console.paint(@camera, @map, @actors)
           @console.clear(@camera, @map, @actors)
 
-          @console.events.each do |ui_event|
+          @console.wait_for_keypress.tap do |ui_event|
             game_event = handle_ui_event(ui_event)
-            if game_event.is_a? Enumerable
-              game_event, arg = game_event.first, game_event[1]
-            end
-            handle_game_event(game_event, arg)
+            handle_game_event(game_event)
             @console.paint(@camera, @map, @actors)
             @console.clear(@camera, @map, @actors)
           end
         when :STATE_WORLD_TURN
-          @actors
-            .each { |actor| actor.tick(@tick, @map) }
+          @actors.each_value.map { |actor| actor.tick(@tick, @map) }.each do |game_event|
+            handle_game_event(game_event)
+            @console.paint(@camera, @map, @actors)
+            @console.clear(@camera, @map, @actors)
+          end
           handle_game_event(:WORLD_TURN_ENDED)
         end
       end

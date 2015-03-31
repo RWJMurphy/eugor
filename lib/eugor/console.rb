@@ -25,7 +25,7 @@ module Eugor
 
     def clear(camera, map, actors)
       frame = camera.frame(map)
-      actors.each do |actor|
+      actors.each_value do |actor|
         offset = actor.location - camera.origin
         if offset.x >= 0 && offset.x < width && offset.y >= 0 && offset.y < height
           tile = frame[offset.y][offset.x]
@@ -58,19 +58,8 @@ module Eugor
       console_flush
     end
 
-    def events
-      key = console_check_for_keypress KEY_PRESSED
-      keys = []
-      until key.to_sym == :KEY_NONE
-        keys << key
-        key = console_check_for_keypress KEY_PRESSED
-      end
-      return [console_wait_for_keypress(false)] if keys.empty?
-      keys
-    end
-
     def wait_for_keypress
-      console_wait_for_keypress false
+      console_wait_for_keypress true
     end
 
     def closed?

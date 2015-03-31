@@ -128,7 +128,7 @@ module Eugor
       height: 64
     }
 
-    attr_accessor :width, :depth
+    attr_reader :width, :depth, :active_chunk
 
     def initialize(width, depth)
       @width = width
@@ -138,6 +138,7 @@ module Eugor
           Chunk.new(CHUNK_SIZE[:width], CHUNK_SIZE[:depth], CHUNK_SIZE[:height])
         end
       end
+      @active_chunk = self[Vector.v2(0, 0)]
       self
     end
 
@@ -170,7 +171,7 @@ module Eugor
     class << self
       def forest
         map = Map.new(1, 1)
-        chunk = map[Vector.v2(0, 0)]
+        chunk = map.active_chunk
 
         blocks = [
           [Cuboid.new(Vector.v3(0, 0, 0), 128, 128, 32), Terrain::SOLID_DIRT],

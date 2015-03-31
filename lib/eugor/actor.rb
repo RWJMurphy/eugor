@@ -19,12 +19,12 @@ module Eugor
 
     def tick(tick, map)
       @fovmap = nil
-      move(Vector.v3(rand(-1..1), rand(-1..1), 0))
+      return [:ACTOR_MOVE, self, Vector.v3(rand(-1..1), rand(-1..1), 0)]
     end
 
     def fov(map)
       @fovmap ||= begin
-        chunk = map[Vector.v2(0, 0)]
+        chunk = map.active_chunk
         fovmap = chunk.fovmap(z).clone
         fovmap.compute_fov(x, y, 0, true, TCOD::FOV_SHADOW)
         fovmap
