@@ -2,7 +2,7 @@ require 'eugor/vector'
 
 module Eugor
   class Rectangle
-    attr_accessor :origin, :width, :depth
+    attr_reader :origin, :width, :depth
     def initialize(origin, width, depth)
       @origin = origin
       @width = width
@@ -18,7 +18,7 @@ module Eugor
     end
 
     def size
-      Vector.v2(width, depth)
+      @size ||= Vector.v2(width, depth)
     end
 
     def northeast

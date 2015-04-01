@@ -63,6 +63,17 @@ module Eugor
       @size ||= Vector.v3(width, depth, height)
     end
 
+    def blit(otherChunk, offset)
+      otherChunk.each do |index, terrain|
+        dest = index + offset
+        next unless !terrain.nil? &&
+                    dest.x >= 0 && dest.x < width &&
+                    dest.y >= 0 && dest.y < depth &&
+                    dest.z >= 0 && dest.z < height
+        self[dest] = terrain.clone
+      end
+    end
+
     def fovmap(z)
       @fovmap ||= {}
       @fovmap[z] ||= begin
@@ -101,26 +112,28 @@ module Eugor
     alias_method :each_with_key, :each
 
     def each_key(&block)
+      v3 = Vector.v3(0, 0, 0)
       height.times do |z|
         depth.times do |y|
           width.times do |x|
-            yield Vector.v3(x, y, z)
+            v3.set!(x, y, z)
+            yield v3
           end
         end
       end
     end
 
     def [](v3)
-      fail IndexError unless v3.z >= 0 && v3.z < height &&
-                             v3.y >= 0 && v3.y < depth &&
-                             v3.x >= 0 && v3.x < width
+      # fail IndexError unless v3.z >= 0 && v3.z < height &&
+      #                        v3.y >= 0 && v3.y < depth &&
+      #                        v3.x >= 0 && v3.x < width
       @terrains[v3.z][v3.y][v3.x]
     end
 
     def []=(v3, terrain)
-      fail IndexError unless v3.z >= 0 && v3.z < height &&
-                             v3.y >= 0 && v3.y < depth &&
-                             v3.x >= 0 && v3.x < width
+      # fail IndexError unless v3.z >= 0 && v3.z < height &&
+      #                        v3.y >= 0 && v3.y < depth &&
+      #                        v3.x >= 0 && v3.x < width
       @terrains[v3.z][v3.y][v3.x] = terrain
     end
   end
@@ -128,11 +141,12 @@ module Eugor
   class Map
     CHUNK_SIZE = Vector.v3(128, 128, 64)
 
-    attr_reader :width, :depth
+    attr_reader :width, :depth, :height
 
     def initialize(width, depth)
       @width = width
       @depth = depth
+      @height = 1
       @chunks = width.times.map do |x|
         depth.times.map do |y|
           Chunk.new(CHUNK_SIZE.x, CHUNK_SIZE.y, CHUNK_SIZE.z, Vector.v2(x, y))
@@ -146,20 +160,38 @@ module Eugor
     end
 
     def size
-      @size ||= Vector.v2(width, depth)
+      @size ||= Vector.v3(
+        width * CHUNK_SIZE.x,
+        depth * CHUNK_SIZE.y,
+        height * CHUNK_SIZE.z
+      )
+    end
+
+    def blit(otherChunk, offset)
+      otherChunk.each do |index, terrain|
+        dest = index + offset
+        next unless !terrain.nil? &&
+                    dest.x >= 0 && dest.x < size.x &&
+                    dest.y >= 0 && dest.y < size.y &&
+                    dest.z >= 0 && dest.z < size.z
+        chunk_for(dest)[dest % CHUNK_SIZE] = terrain.clone
+      end
     end
 
     def chunk_for(v3)
-      chunk_index = v3 / CHUNK_SIZE
-      fail IndexError unless chunk_index.x >= 0 && chunk_index.x < width &&
-                             chunk_index.y >= 0 && chunk_index.y < depth
-      @chunks[chunk_index.x][chunk_index.y]
+      x = v3.x / CHUNK_SIZE.x
+      y = v3.y / CHUNK_SIZE.y
+      # fail IndexError unless x >= 0 && x < width &&
+      #                        y >= 0 && y < depth
+      @chunks[x][y]
     end
 
     def each_chunk_index(&block)
+      v2 = Vector.v2(0, 0)
       width.times do |x|
         depth.times do |y|
-          yield Vector.v2(x, y)
+          v2.set!(x, y)
+          yield v2
         end
       end
     end
@@ -171,38 +203,26 @@ module Eugor
     end
 
     def [](v3)
-      chunk_offset = v3 % CHUNK_SIZE
-      chunk_for(v3)[chunk_offset]
+      chunk_for(v3)[v3 % CHUNK_SIZE]
     end
 
     def []=(v3, chunk)
-      chunk_offset = v3 % CHUNK_SIZE
-      chunk_for(v3)[chunk_offset] = chunk
+      chunk_for(v3)[v3 % CHUNK_SIZE] = chunk
     end
   end
 
   class TerrainFeature < Chunk
-    def blit(otherChunk, offset = nil)
-      offset ||= @offset
-      each do |o, t|
-        begin
-          otherChunk[o + offset] = t.clone unless t.nil?
-        rescue IndexError
-          next
-        end
-      end
-    end
   end
 
   module Maps
     class << self
-      def forest
+      def forest(surface_level = 32)
         map = Map.new(1, 1)
 
         blocks = [
-          [Cuboid.new(Vector.v3(0, 0, 0), 128, 128, 32), Terrain::SOLID_DIRT],
-          [Cuboid.new(Vector.v3(0, 0, 32), 128, 128, 1), Terrain::GROUND],
-          [Cuboid.new(Vector.v3(0, 0, 33), 128, 128, 31), Terrain::AIR]
+          [Cuboid.new(Vector.v3(0, 0, 0), 128, 128, surface_level), Terrain::SOLID_DIRT],
+          [Cuboid.new(Vector.v3(0, 0, surface_level), 128, 128, 1), Terrain::GROUND],
+          [Cuboid.new(Vector.v3(0, 0, surface_level + 1), 128, 128, 64 - (surface_level + 1)), Terrain::AIR]
         ]
 
         blocks.each do |block, terrain|
@@ -241,10 +261,10 @@ module Eugor
 
         Map::CHUNK_SIZE.y.times do |y|
           Map::CHUNK_SIZE.x.times do |x|
-            if rand(100) < 20
+            if rand(100) < 1
               pine = make_pine.call(3, 3, 30 - rand(15))
               o = Vector.v3(x, y, 32) - Vector.v3(pine.width / 2, pine.height / 2, 0)
-              pine.blit(map, o)
+              map.blit(pine, o)
             end
           end
         end

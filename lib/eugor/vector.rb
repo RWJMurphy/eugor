@@ -1,154 +1,232 @@
 module Eugor
   module Vector
-    class V2
-      attr_accessor :x, :y
-
-      def initialize(x, y)
-        @x = x
-        @y = y
+    V2 = Struct.new(:x, :y) do
+      def set!(x, y)
+        self.x = x
+        self.y = y
+        self
       end
 
-      def inspect
-        "<#{self.class.name} #{self.to_s}>"
+      def add(other)
+        clone.add!(other)
       end
+      alias_method :+, :add
 
-      def to_s
-        "(#{x}, #{y})"
-      end
-
-      def +(other)
-        fail TypeError unless other.is_a? V2
-        V2.new(x + other.x, y + other.y)
-      end
-
-      def -(other)
-        self + -other
-      end
-
-      def *(other)
+      def add!(other)
         case other
         when Numeric
-          V2.new(x * other, y * other)
+          self.x += other
+          self.y += other
         when V2
-          V2.new(x * other.x, y * other.y)
+          self.x += other.x
+          self.y += other.y
         else
           fail TypeError
         end
+        self
       end
+
+      def sub!(other)
+        case other
+        when Numeric
+          self.x -= other
+          self.y -= other
+        when V2
+          self.x -= other.x
+          self.y -= other.y
+        else
+          fail TypeError
+        end
+        self
+      end
+
+      def sub(other)
+        clone.sub!(other)
+      end
+      alias_method :-, :sub
+
+      def mul!(other)
+        case other
+        when Numeric
+          self.x *= other
+          self.y *= other
+        when V2
+          self.x *= other.x
+          self.y *= other.y
+        else
+          fail TypeError
+        end
+        self
+      end
+
+      def mul(other)
+        clone.mul!(other)
+      end
+      alias_method :*, :mul
 
       def -@
-        self * -1
+        mul(-1)
       end
 
-      def /(other)
+      def div!(other)
         case other
         when Numeric
-          V2.new(x / other, y / other)
+          self.x /= other
+          self.y /= other
         when V2
-          V2.new(x / other.x, y / other.y)
+          self.x /= other.x
+          self.y /= other.y
         else
           fail TypeError
         end
+        self
       end
 
-      def %(other)
+      def div(other)
+        clone.div!(other)
+      end
+      alias_method :/, :div
+
+      def modulo!(other)
         case other
         when Numeric
-          V2.new(x % other, y % other)
+          self.x %= other
+          self.y %= other
         when V2
-          V2.new(x % other.x, y % other.y)
+          self.x %= other.x
+          self.y %= other.y
         else
           fail TypeError
         end
+        self
       end
 
-      def ==(other)
-        return false unless other.is_a? V2
-        other.x == x && other.y == y
+      def modulo(other)
+        clone.modulo!(other)
       end
-      alias_method :eql?, :==
-
-      def hash
-        [x, y].hash
-      end
+      alias_method :%, :modulo
 
       def to_v3
         V3.new(x, y, 0)
       end
     end
 
-    class V3
-      attr_accessor :x, :y, :z
-      def initialize(x, y, z)
-        @x = x
-        @y = y
-        @z = z
+    V3 = Struct.new(:x, :y, :z) do
+      def set!(x, y, z)
+        self.x = x
+        self.y = y
+        self.z = z
         self
       end
 
-      def inspect
-        "<#{self.class.name} #{self.to_s}>"
-      end
-
-      def to_s
-        "(#{x}, #{y}, #{z})"
-      end
-
-      def +(other)
-        fail TypeError unless other.is_a? V3
-        V3.new(x + other.x, y + other.y, z + other.z)
-      end
-
-      def -(other)
-        self + -other
-      end
-
-      def *(other)
+      def add!(other)
         case other
         when Numeric
-          V3.new(x * other, y * other, z * other)
+          self.x += other
+          self.y += other
+          self.z += other
         when V3
-          V3.new(x * other.x, y * other.y, z * other.z)
+          self.x += other.x
+          self.y += other.y
+          self.z += other.z
         else
           fail TypeError
         end
+        self
       end
 
-      def %(other)
+      def add(other)
+        clone.add!(other)
+      end
+      alias_method :+, :add
+
+      def sub!(other)
         case other
         when Numeric
-          V3.new(x % other, y % other, z % other)
+          self.x -= other
+          self.y -= other
+          self.z -= other
         when V3
-          V3.new(x % other.x, y % other.y, z % other.z)
+          self.x -= other.x
+          self.y -= other.y
+          self.z -= other.z
         else
           fail TypeError
         end
+        self
       end
+
+      def sub(other)
+        clone.sub!(other)
+      end
+      alias_method :-, :sub
+
+      def mul!(other)
+        case other
+        when Numeric
+          self.x *= other
+          self.y *= other
+          self.z *= other
+        when V3
+          self.x *= other.x
+          self.y *= other.y
+          self.z *= other.z
+        else
+          fail TypeError
+        end
+        self
+      end
+
+      def mul(other)
+        clone.mul!(other)
+      end
+      alias_method :*, :mul
 
       def -@
-        self * -1
+        mul(-1)
       end
 
-      def /(other)
+      def div!(other)
         case other
         when Numeric
-          V3.new(x / other, y / other, z / other)
+          self.x /= other
+          self.y /= other
+          self.z /= other
         when V3
-          V3.new(x / other.x, y / other.y, z / other.z)
+          self.x /= other.x
+          self.y /= other.y
+          self.z /= other.z
         else
           fail TypeError
         end
+        self
       end
 
-      def ==(other)
-        return false unless other.is_a? V3
-        other.x == x && other.y == y && other.z == z
+      def div(other)
+        clone.div!(other)
       end
-      alias_method :eql?, :==
+      alias_method :/, :div
 
-      def hash
-        [x, y, z].hash
+      def modulo!(other)
+        case other
+        when Numeric
+          self.x %= other
+          self.y %= other
+          self.z %= other
+        when V3
+          self.x %= other.x
+          self.y %= other.y
+          self.z %= other.z
+        else
+          fail TypeError
+        end
+        self
       end
+
+      def modulo(other)
+        clone.modulo!(other)
+      end
+      alias_method :%, :modulo
 
       def to_v2
         V2.new(x, y)

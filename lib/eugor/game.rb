@@ -14,21 +14,23 @@ module Eugor
     SCREEN_WIDTH = 80
     SCREEN_HEIGHT = 50
 
+    SURFACE_LEVEL = 32
+
     def initialize
-      @map = Maps.forest
+      @map = Maps.forest(SURFACE_LEVEL)
 
       @console = Console.new(SCREEN_WIDTH, SCREEN_HEIGHT)
       @player = Player.new('@', Console::Color::WHITE)
-      @player.location = Vector.v3(128 / 2, 128 / 2, 32)
+      @player.location = Vector.v3(Map::CHUNK_SIZE.x / 2, Map::CHUNK_SIZE.y / 2, SURFACE_LEVEL)
 
       @camera = Camera.new(
         @player,
-        Vector.v3((128 - SCREEN_WIDTH) / 2, (128 - SCREEN_HEIGHT) / 2, 32),
+        @player.location - Vector.v3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0),
         SCREEN_WIDTH, SCREEN_HEIGHT
       )
 
       npc = Actor.new('@', Console::Color::YELLOW)
-      npc.location = Vector.v3(128 / 2 + 5, 128 / 2, 32)
+      npc.location = Vector.v3(Map::CHUNK_SIZE.x / 2 + 5, Map::CHUNK_SIZE.y / 2, SURFACE_LEVEL)
 
       @actors = [@player, npc].map{ |actor| [actor.location, actor] }.to_h
       @state = :STATE_PLAYER_TURN
@@ -71,7 +73,9 @@ module Eugor
           target = @player.location + delta
           if @map[target].walkable?
             @actors.delete(@player.location)
+            @console.dirty(@player.location)
             @player.location += delta
+            @console.dirty(@player.location)
             @actors[@player.location] = @player
             next_state = :STATE_WORLD_TURN
           else
@@ -81,6 +85,7 @@ module Eugor
         when :CAMERA_MOVE
           delta = args.first
           @camera.origin += delta
+          @console.all_dirty
           next_state = @state
         when :PLAYER_QUIT
           next_state = :STATE_QUIT
@@ -98,8 +103,10 @@ module Eugor
           target = actor.location + delta
           destination = @map[target]
           if destination.walkable?
+            @console.dirty(actor.location)
             @actors.delete(actor.location)
             actor.location += delta
+            @console.dirty(actor.location)
             @actors[actor.location] = actor
           else
             STDERR.puts("#{actor} bumps into #{destination}")
@@ -115,24 +122,21 @@ module Eugor
     end
 
     def run
+      @console.all_dirty
+      @console.paint(@camera, @map, @actors)
+
       until quit?
         case @state
         when :STATE_PLAYER_TURN
+          ui_event = @console.wait_for_keypress
+          game_event = handle_ui_event(ui_event)
+          handle_game_event(game_event)
           @console.paint(@camera, @map, @actors)
-          @console.clear(@camera, @map, @actors)
-
-          @console.wait_for_keypress.tap do |ui_event|
-            game_event = handle_ui_event(ui_event)
-            handle_game_event(game_event)
-            @console.paint(@camera, @map, @actors)
-            @console.clear(@camera, @map, @actors)
-          end
         when :STATE_WORLD_TURN
           @actors.each_value.map { |actor| actor.tick(@tick, @map) }.each do |game_event|
             handle_game_event(game_event)
-            @console.paint(@camera, @map, @actors)
-            @console.clear(@camera, @map, @actors)
           end
+          @console.paint(@camera, @map, @actors)
           handle_game_event(:WORLD_TURN_ENDED)
         end
       end

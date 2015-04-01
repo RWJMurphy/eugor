@@ -1,5 +1,7 @@
 require 'libtcod'
 
+require 'eugor/rectangle'
+require 'eugor/vector'
 require 'eugor/monkeys/libtcod'
 
 module Eugor
@@ -18,21 +20,15 @@ module Eugor
                         false,
                         RENDERER_SDL
       )
+      @dirty = []
+      @all_dirty = false
       @buffer = console_new(width, height)
 
       sys_set_fps(LIMIT_FPS)
     end
 
-    def clear(camera, map, actors)
-      frame = camera.frame(map)
-      actors.each_value do |actor|
-        offset = actor.location - camera.origin
-        if offset.x >= 0 && offset.x < width && offset.y >= 0 && offset.y < height
-          tile = frame[offset.y][offset.x]
-          tile = [' ', Color::BLACK] if tile.nil?
-          putc(offset.x, offset.y, tile[0], tile[1])
-        end
-      end
+    def to_rect
+      @to_rect ||= Eugor::Rectangle(Eugor::Vector.v2(0, 0), width, height)
     end
 
     def putc(x, y, c, color = Color::WHITE)
@@ -40,15 +36,26 @@ module Eugor
       console_put_char(@buffer, x, y, c.ord, BKGND_NONE)
     end
 
+    def dirty(v2)
+      @dirty << v2
+    end
+
+    def all_dirty
+      @all_dirty = true
+    end
+
     def paint(camera, map, actors)
       # draw
-      camera.frame(map, actors).each_with_index do |row, y|
-        row.each_with_index do |tile, x|
-          tile = [' ', Color::BLACK] if tile.nil?
-          putc(x, y, tile[0], tile[1])
-        end
+      if @all_dirty
+        frame = camera.frame(map, actors, nil)
+      elsif !@dirty.empty?
+        frame = camera.frame(map, actors, @dirty)
       end
-
+      console_blit(
+        frame, 0, 0, camera.width, camera.depth,
+        @buffer, 0, 0,
+        1.0, 1.0
+      )
       # flush
       console_blit(
         @buffer, 0, 0, width, height,
@@ -56,6 +63,8 @@ module Eugor
         1.0, 1.0
       )
       console_flush
+      @all_dirty = false
+      @dirty = []
     end
 
     def wait_for_keypress
