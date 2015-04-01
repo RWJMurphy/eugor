@@ -51,6 +51,17 @@ module Eugor
         end
       end
 
+      def %(other)
+        case other
+        when Numeric
+          V2.new(x % other, y % other)
+        when V2
+          V2.new(x % other.x, y % other.y)
+        else
+          fail TypeError
+        end
+      end
+
       def ==(other)
         return false unless other.is_a? V2
         other.x == x && other.y == y
