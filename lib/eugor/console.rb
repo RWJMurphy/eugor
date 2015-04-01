@@ -16,7 +16,7 @@ module Eugor
       @width = width
       @height = height
       console_init_root(width, height,
-                        'ruby/TCOD tutorial',
+                        'Eugor',
                         false,
                         RENDERER_SDL
       )
