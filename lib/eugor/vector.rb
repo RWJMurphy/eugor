@@ -7,6 +7,17 @@ module Eugor
         self
       end
 
+      def set_from!(other)
+        case other
+        when V2, V3
+          self.x = other.x
+          self.y = other.y
+        else
+          fail TypeError
+        end
+        self
+      end
+
       def add(other)
         clone.add!(other)
       end
@@ -116,6 +127,22 @@ module Eugor
         self.x = x
         self.y = y
         self.z = z
+        self
+      end
+
+      def set_from!(other)
+        case other
+        when V2
+          self.x = other.x
+          self.y = other.y
+          self.z = 0
+        when V3
+          self.x = other.x
+          self.y = other.y
+          self.z = other.z
+        else
+          fail TypeError
+        end
         self
       end
 
