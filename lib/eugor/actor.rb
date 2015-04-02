@@ -38,5 +38,6 @@ module Eugor
     def inspect
       "<#{self.class.name} #{char}, #{color}>"
     end
+    alias_method :to_s, :inspect
   end
 end
