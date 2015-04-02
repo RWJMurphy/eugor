@@ -169,12 +169,13 @@ module Eugor
 
     def blit(otherChunk, origin)
       otherChunk.each do |index, terrain|
-        dest = index + offset
-        next unless !terrain.nil? &&
-                    dest.x >= 0 && dest.x < size.x &&
-                    dest.y >= 0 && dest.y < size.y &&
-                    dest.z >= 0 && dest.z < size.z
-        chunk_for(dest)[dest % CHUNK_SIZE] = terrain.clone
+        next if terrain.nil?
+        dest = index + origin
+        chunk = chunk_for(dest)
+        next if chunk.nil?
+        chunk_index = dest % CHUNK_SIZE
+        # next if chunk[chunk_index].char != ' ' && mode != :replace
+        chunk[chunk_index] = terrain.clone
       end
     end
 
