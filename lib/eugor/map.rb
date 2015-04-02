@@ -186,6 +186,24 @@ module Eugor
       @chunks[x][y]
     end
 
+    def subchunk(origin, width, depth, height)
+      subchunk = Chunk.new(origin.clone, width, depth, height)
+      global_coord = Vector.v3(0, 0, 0)
+      width.times do |x|
+        depth.times do |y|
+          global_coord.x = origin.x + x
+          global_coord.y = origin.y + y
+          chunk = chunk_for(global_coord)
+          height.times do |z|
+            global_coord.z = origin.z + z
+            local_coord = global_coord % CHUNK_SIZE
+            subchunk[Vector.v3(x, y, z)] = chunk[local_coord]
+          end
+        end
+      end
+      subchunk
+    end
+
     def each_chunk_index(&block)
       v2 = Vector.v2(0, 0)
       width.times do |x|

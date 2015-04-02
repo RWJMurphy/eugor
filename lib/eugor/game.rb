@@ -20,8 +20,11 @@ module Eugor
       @map = Maps.forest(SURFACE_LEVEL)
 
       @console = Console.new(SCREEN_WIDTH, SCREEN_HEIGHT)
+
+      @actors = {}
       @player = Player.new('@', Console::Color::WHITE)
       @player.location = Vector.v3(Map::CHUNK_SIZE.x / 2, Map::CHUNK_SIZE.y / 2, SURFACE_LEVEL)
+      @actors[@player.location] = @player
 
       @camera = Camera.new(
         @player,
@@ -29,10 +32,15 @@ module Eugor
         SCREEN_WIDTH, SCREEN_HEIGHT
       )
 
-      npc = Actor.new('@', Console::Color::YELLOW)
-      npc.location = Vector.v3(Map::CHUNK_SIZE.x / 2 + 5, Map::CHUNK_SIZE.y / 2, SURFACE_LEVEL)
+      @logger.debug "Spawning horrible trapezoids"
+      rand(10..30).times do
+        npc = Actor.new(Console::CHAR_DIAMOND, Console::Color::LIGHT_BLUE)
+        location = Vector.v3(rand(Map::CHUNK_SIZE.x), rand(Map::CHUNK_SIZE.y), SURFACE_LEVEL)
+        npc.location = location
+        @actors[location] = npc
+      end
 
-      @actors = [@player, npc].map{ |actor| [actor.location, actor] }.to_h
+      @actors = @actors.to_h
       @state = :STATE_PLAYER_TURN
 
       @tick = 0
