@@ -78,6 +78,8 @@ module Eugor
         [:CAMERA_MOVE, Vector.v3(0, 0, 1)]
       when :>
         [:CAMERA_MOVE, Vector.v3(0, 0, -1)]
+      when :~
+        [:PRY_AT_THE_BINDINGS_OF_REALITY]
       else
         [:UNHANDLED_KEY, event]
       end
@@ -120,6 +122,11 @@ module Eugor
         when :UNHANDLED_KEY
           key = args.first
           @logger.warn "Unhandled key: #{key.c}"
+          next_state = @state
+        when :PRY_AT_THE_BINDINGS_OF_REALITY
+          @logger.warn "Reality begins to fray at the seams."
+          @logger.warn "You feel yourself unravelling."
+          binding.pry
           next_state = @state
         end
       when :STATE_WORLD_TURN
