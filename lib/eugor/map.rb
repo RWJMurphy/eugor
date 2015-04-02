@@ -9,6 +9,8 @@ module Eugor
   class Terrain
     include Enumerable
 
+    FEET_PER_METRE = 3.2808399
+
     attr_accessor :char, :color, :lit
 
     def initialize(char, color, transparent = false, walkable = false)
@@ -108,12 +110,14 @@ module Eugor
     alias_method :each_with_key, :each
 
     def each_key(&block)
+      return enum_for(:each_key) unless block_given?
+
       v3 = Vector.v3(0, 0, 0)
       height.times do |z|
         depth.times do |y|
           width.times do |x|
             v3.set!(x, y, z)
-            yield v3
+            yield v3.clone
           end
         end
       end
@@ -179,7 +183,7 @@ module Eugor
       y = v3.y / CHUNK_SIZE.y
       # fail IndexError unless x >= 0 && x < width &&
       #                        y >= 0 && y < depth
-      @chunks[x][y]
+      @chunks[x].nil? ? nil : @chunks[x][y]
     end
 
     def subchunk(origin, width, depth, height)
@@ -217,7 +221,8 @@ module Eugor
     end
 
     def [](v3)
-      chunk_for(v3)[v3 % CHUNK_SIZE]
+      chunk = chunk_for(v3)
+      chunk.nil? ? Terrain::NULL : chunk[v3 % CHUNK_SIZE]
     end
 
     def []=(v3, chunk)
@@ -226,63 +231,90 @@ module Eugor
   end
 
   class TerrainFeature < Chunk
+    def initialize(width, depth, height)
+      super(Vector.v3(0, 0, 0), width, depth, height)
+    end
+  end
+
+  module TerrainFeatures
+    class << self
+
+      # Pines are evergreen, coniferous resinous trees (or rarely shrubs)
+      # growing 3 - 80 m tall, with the majority of species reaching 15 - 45 m
+      # tall.
+      #
+      # <https://en.wikipedia.org/wiki/Pine>
+
+      def pine(spread = nil, height = nil)
+        spread ||= rand(3..15)
+        height ||= rand(15..45)
+
+        pine_trunk = Terrain.new('#', Console::Color::DARK_ORANGE, false, false)
+        pine_leaf = Terrain.new('*', Console::Color::DARK_GREEN, false, true)
+        pine_leaf_snowed = Terrain.new('*', Console::Color::WHITE, false, true)
+
+        leaf_start = 2
+        snow_start = height - 10
+
+        pine = TerrainFeature.new(spread, spread, height)
+        mid = Vector.v3(spread / 2, spread / 2, 0)
+        pine.each_key do |o|
+          t = case
+              when o.y == mid.y && o.x == mid.x
+                pine_trunk
+              when o.z >= leaf_start
+                dist2 = (o.x - mid.x)**2 + (o.y - mid.y)**2
+                if dist2 <= ((spread / 2) * (1.0 - (o.z.to_f - leaf_start) / (height - leaf_start)) + 1)**2
+                  if rand <= 0.9
+                    if o.z >= snow_start
+                      pine_leaf_snowed
+                    else
+                      pine_leaf
+                    end
+                  end
+                end
+              end
+          pine[o] = t
+        end
+        pine
+      end
+    end
   end
 
   module Maps
     class << self
-      def forest(surface_level = 32)
+      def forest(surface_level = 4)
+        logger = Logging.logger[self]
         map = Map.new(1, 1)
 
-        blocks = [
-          [Cuboid.new(Vector.v3(0, 0, 0), 128, 128, surface_level), Terrain::SOLID_DIRT],
-          [Cuboid.new(Vector.v3(0, 0, surface_level), 128, 128, 1), Terrain::GROUND],
-          [Cuboid.new(Vector.v3(0, 0, surface_level + 1), 128, 128, 64 - (surface_level + 1)), Terrain::AIR]
-        ]
+        blocks = {
+          underground: [Cuboid.new(Vector.v3(0, 0, 0), Map::CHUNK_SIZE.x, Map::CHUNK_SIZE.y, surface_level), Terrain::SOLID_DIRT],
+          surface: [Cuboid.new(Vector.v3(0, 0, surface_level), Map::CHUNK_SIZE.x, Map::CHUNK_SIZE.y, 1), Terrain::GROUND],
+          air: [Cuboid.new(Vector.v3(0, 0, surface_level + 1), Map::CHUNK_SIZE.x, Map::CHUNK_SIZE.y, Map::CHUNK_SIZE.z - (surface_level + 1)), Terrain::AIR]
+        }
 
-        blocks.each do |block, terrain|
+        blocks.each do |name, block_and_terrain|
+          block, terrain = block_and_terrain
+          logger.debug "Filling #{name} #{block} with #{terrain}"
           block.each do |v3|
             map[v3] = terrain.clone
           end
         end
 
-        # Pines are evergreen, coniferous resinous trees (or rarely
-        # shrubs) growing 3-80 m tall, with the majority of species
-        # reaching 15-45 m tall.
-        # https://en.wikipedia.org/wiki/Pine#Description
-        pine_trunk = Terrain.new('#', Console::Color::DARK_ORANGE, false, false)
-        pine_leaf = Terrain.new('*', Console::Color::DARK_GREEN, false, true)
-        pine_leaf_snowed = Terrain.new('*', Console::Color::WHITE, false, true)
-
-        make_pine = proc do |width, depth, height|
-          pine = TerrainFeature.new(width, depth, height)
-          pine.each_key do |o|
-            t = case
-            when o.y == depth / 2 && o.x == depth / 2
-              pine_trunk
-            when o.z >= 2
-              if rand(height) - o.z > 0
-                if height - o.z <= 10
-                  pine_leaf_snowed
-                else
-                  pine_leaf
-                end
-              end
-            end
-            pine[o] = t
+        logger.debug "Generating pine trees for surface"
+        count = blocks[:surface][0].each.to_enum.map do |v3|
+          if rand(100) < 2
+            #pine = TerrainFeatures.pine(rand(3..5), rand(10..30))
+            pine = TerrainFeatures.pine
+            map.blit(pine, v3 - Vector.v3(pine.width / 2, pine.height / 2, 0))
+            1
+          else
+            0
           end
-          pine
-        end
+        end.reduce(&:+)
+        logger.debug "Generated #{count} pines"
 
-        Map::CHUNK_SIZE.y.times do |y|
-          Map::CHUNK_SIZE.x.times do |x|
-            if rand(100) < 1
-              pine = make_pine.call(3, 3, 30 - rand(15))
-              o = Vector.v3(x, y, 32) - Vector.v3(pine.width / 2, pine.height / 2, 0)
-              map.blit(pine, o)
-            end
-          end
-        end
-
+        logger.debug "Calculating lighting"
         map.each_chunk(&:calculate_lighting)
         map
       end
