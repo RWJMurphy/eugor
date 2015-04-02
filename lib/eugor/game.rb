@@ -55,17 +55,25 @@ module Eugor
     end
 
     def handle_ui_event(event)
-      game_event = case event.to_sym
+      case event.to_sym
       when :KEY_ESCAPE
         [:PLAYER_QUIT]
-      when :KEY_UP
+      when :KEY_UP, :k
         [:ACTOR_MOVE, Vector.v3(0, -1, 0)]
-      when :KEY_DOWN
-        [:ACTOR_MOVE, Vector.v3(0, 1, 0)]
-      when :KEY_LEFT
-        [:ACTOR_MOVE, Vector.v3(-1, 0, 0)]
-      when :KEY_RIGHT
+      when :u
+        [:ACTOR_MOVE, Vector.v3(1, -1, 0)]
+      when :KEY_RIGHT, :l
         [:ACTOR_MOVE, Vector.v3(1, 0, 0)]
+      when :n
+        [:ACTOR_MOVE, Vector.v3(1, 1, 0)]
+      when :KEY_DOWN, :j
+        [:ACTOR_MOVE, Vector.v3(0, 1, 0)]
+      when :b
+        [:ACTOR_MOVE, Vector.v3(-1, 1, 0)]
+      when :KEY_LEFT, :h
+        [:ACTOR_MOVE, Vector.v3(-1, 0, 0)]
+      when :y
+        [:ACTOR_MOVE, Vector.v3(-1, -1, 0)]
       when :<
         [:CAMERA_MOVE, Vector.v3(0, 0, 1)]
       when :>
@@ -73,7 +81,6 @@ module Eugor
       else
         [:UNHANDLED_KEY, event]
       end
-      game_event
     end
 
     def handle_game_event(game_event)
@@ -85,27 +92,34 @@ module Eugor
         when :ACTOR_MOVE
           delta = args.first
           target = @player.location + delta
-          if @map[target].walkable?
+          if @actors[target]
+            @logger.debug "Player walked into #{@actors[target]}, ignoring move"
+            next_state = @state
+          elsif !@map[target].walkable?
+            @logger.debug "Player walked into #{@map[target]}, ignoring move"
+            next_state = @state
+          else
             @actors.delete(@player.location)
             @console.dirty(@player.location)
             @player.location += delta
             @console.dirty(@player.location)
             @actors[@player.location] = @player
             next_state = :STATE_WORLD_TURN
-          else
-            STDERR.puts "bump"
-            next_state = @state
           end
         when :CAMERA_MOVE
-          delta = args.first
-          @camera.origin += delta
-          @console.all_dirty
+          new_origin = args.first + @camera.origin
+          if new_origin.z >= 0 && new_origin.z < @map.height * Map::CHUNK_SIZE.z
+            @camera.origin.set_from!(new_origin)
+            @console.all_dirty
+          else
+            @logger.warn "Tried to move camera out of bounds: #{new_origin}"
+          end
           next_state = @state
         when :PLAYER_QUIT
           next_state = :STATE_QUIT
         when :UNHANDLED_KEY
           key = args.first
-          STDERR.puts("Unhandled key: #{key.c}")
+          @logger.warn "Unhandled key: #{key.c}"
           next_state = @state
         end
       when :STATE_WORLD_TURN
