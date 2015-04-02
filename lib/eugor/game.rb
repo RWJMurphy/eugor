@@ -1,11 +1,11 @@
+require 'logging'
+
 require 'eugor/actor'
 require 'eugor/camera'
 require 'eugor/console'
 require 'eugor/map'
 require 'eugor/player'
 require 'eugor/vector'
-
-require 'libtcod'
 
 module Eugor
   class Game
@@ -14,18 +14,24 @@ module Eugor
     SCREEN_WIDTH = 80
     SCREEN_HEIGHT = 50
 
-    SURFACE_LEVEL = 32
+    SURFACE_LEVEL = 4
 
     def initialize
+      @logger = Logging.logger[self]
+
+      @logger.debug "Creating a new forest map"
       @map = Maps.forest(SURFACE_LEVEL)
 
+      @logger.debug "Initializing console"
       @console = Console.new(SCREEN_WIDTH, SCREEN_HEIGHT)
 
+      @logger.debug "Initializing player"
       @actors = {}
       @player = Player.new('@', Console::Color::WHITE)
       @player.location = Vector.v3(Map::CHUNK_SIZE.x / 2, Map::CHUNK_SIZE.y / 2, SURFACE_LEVEL)
       @actors[@player.location] = @player
 
+      @logger.debug "Initializing camera"
       @camera = Camera.new(
         @player,
         @player.location - Vector.v3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0),
@@ -107,17 +113,19 @@ module Eugor
         when :ACTOR_NONE
           next_state = :STATE_WORLD_TURN
         when :ACTOR_MOVE
-          actor, delta = args
+          actor = args.shift
+          delta = args.shift
           target = actor.location + delta
-          destination = @map[target]
-          if destination.walkable?
-            @console.dirty(actor.location)
+          if @actors[target]
+            @logger.debug "#{actor} walked into #{@actors[target]}, ignoring move"
+          elsif !@map[target].walkable?
+            @logger.debug "#{actor} walked into #{@map[target]}, ignoring move"
+          else
             @actors.delete(actor.location)
+            @console.dirty(actor.location)
             actor.location += delta
             @console.dirty(actor.location)
             @actors[actor.location] = actor
-          else
-            STDERR.puts("#{actor} bumps into #{destination}")
           end
           next_state = :STATE_WORLD_TURN
         when :WORLD_TURN_ENDED

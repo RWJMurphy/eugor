@@ -152,6 +152,7 @@ module Eugor
           Chunk.new(Vector.v2(x * CHUNK_SIZE.x, y * CHUNK_SIZE.y), CHUNK_SIZE.x, CHUNK_SIZE.y, CHUNK_SIZE.z)
         end
       end
+      @logger = Logging.logger[self]
       self
     end
 

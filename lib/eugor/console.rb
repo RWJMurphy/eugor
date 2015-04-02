@@ -13,6 +13,8 @@ module Eugor
     attr_reader :width, :height
 
     def initialize(width, height)
+      @logger = Logging.logger[self]
+
       @width = width
       @height = height
       console_init_root(width, height,

@@ -14,6 +14,7 @@ module Eugor
       @color = color
 
       @brain = {}
+      @logger = Logging.logger[self]
       self
     end
 

@@ -31,6 +31,7 @@ module Eugor
     end
 
     def each(&block)
+      return enum_for(:each) unless block_given?
       height.times do |z|
         depth.times do |y|
           width.times do |x|

@@ -1,6 +1,8 @@
 source 'https://rubygems.org'
 
 gem 'libtcod', '~> 0.1'
+gem 'logging', '~> 1.8'
+gem 'trollop', '~> 2.1'
 
 group :development do
   gem 'pry'

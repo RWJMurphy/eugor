@@ -12,6 +12,7 @@ module Eugor
       @width = width
       @depth = depth
       @frame = TCOD.console_new(width, depth)
+      @logger = Logging.logger[self]
       self
     end
 
