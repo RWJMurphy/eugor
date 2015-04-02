@@ -1,6 +1,10 @@
 module Eugor
   module Vector
     V2 = Struct.new(:x, :y) do
+      def size
+        Math.sqrt(x**2 + y**2)
+      end
+
       def set!(x, y)
         self.x = x
         self.y = y
@@ -123,6 +127,10 @@ module Eugor
     end
 
     V3 = Struct.new(:x, :y, :z) do
+      def size
+        Math.sqrt(x**2 + y**2 + z**2)
+      end
+
       def set!(x, y, z)
         self.x = x
         self.y = y

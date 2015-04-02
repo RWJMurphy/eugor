@@ -39,8 +39,8 @@ module Eugor
       )
 
       @logger.debug "Spawning horrible trapezoids"
-      rand(10..30).times do
-        npc = Actor.new(Console::CHAR_DIAMOND, Console::Color::LIGHT_BLUE)
+      rand(10..100).times do
+        npc = Actors::HorribleTrapezoid.new
         location = Vector.v3(rand(Map::CHUNK_SIZE.x), rand(Map::CHUNK_SIZE.y), SURFACE_LEVEL)
         npc.location = location
         @actors[location] = npc
@@ -170,7 +170,7 @@ module Eugor
           handle_game_event(game_event)
           @console.paint(@camera, @map, @actors)
         when :STATE_WORLD_TURN
-          @actors.each_value.map { |actor| actor.tick(@tick, @map) }.each do |game_event|
+          @actors.each_value.map { |actor| actor.tick(@tick, @map, @actors) }.each do |game_event|
             handle_game_event(game_event)
           end
           @console.paint(@camera, @map, @actors)

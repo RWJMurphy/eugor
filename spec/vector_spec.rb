@@ -8,6 +8,18 @@ module Eugor::Vector
       expect(v.y).to eq(5)
     end
 
+    it "has a size" do
+      [
+        [V2.new(0, 0), 0],
+        [V2.new(3, 4), 5],
+        [V2.new(-3, 4), 5],
+        [V2.new(-3, -4), 5],
+        [V2.new(1, 1), Math.sqrt(2)]
+      ].each do |v, size|
+        expect(v.size).to eq(size)
+      end
+    end
+
     it "can be tested for equality" do
       a = V2.new(1, 1)
       b = V2.new(1, 1)
