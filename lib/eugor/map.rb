@@ -45,31 +45,27 @@ module Eugor
   end
 
   class Chunk
-    attr_reader :width, :depth, :height, :offset
-    def initialize(width, depth, height, offset=Vector.v2(0, 0))
+    attr_reader :origin, :width, :depth, :height
+    def initialize(origin, width, depth, height)
+      @origin = origin
       @width = width
       @depth = depth
       @height = height
-      @offset = offset
       @terrains = (0...height).map { (0...depth).map { (0...width).map { Terrain::NULL } } }
       self
     end
 
     def inspect
-      "<#{self.class.name} #{size}@#{offset}}>"
+      "<#{self.class.name} #{size}@#{origin}}>"
     end
 
     def size
       @size ||= Vector.v3(width, depth, height)
     end
 
-    def blit(otherChunk, offset)
+    def blit(otherChunk, origin)
       otherChunk.each do |index, terrain|
-        dest = index + offset
-        next unless !terrain.nil? &&
-                    dest.x >= 0 && dest.x < width &&
-                    dest.y >= 0 && dest.y < depth &&
-                    dest.z >= 0 && dest.z < height
+        dest = index + origin
         self[dest] = terrain.clone
       end
     end
@@ -149,7 +145,7 @@ module Eugor
       @height = 1
       @chunks = width.times.map do |x|
         depth.times.map do |y|
-          Chunk.new(CHUNK_SIZE.x, CHUNK_SIZE.y, CHUNK_SIZE.z, Vector.v2(x, y))
+          Chunk.new(Vector.v2(x * CHUNK_SIZE.x, y * CHUNK_SIZE.y), CHUNK_SIZE.x, CHUNK_SIZE.y, CHUNK_SIZE.z)
         end
       end
       self
@@ -167,7 +163,7 @@ module Eugor
       )
     end
 
-    def blit(otherChunk, offset)
+    def blit(otherChunk, origin)
       otherChunk.each do |index, terrain|
         dest = index + offset
         next unless !terrain.nil? &&
