@@ -11,11 +11,12 @@ module Eugor
 
     FEET_PER_METRE = 3.2808399
 
-    attr_accessor :char, :color, :lit
+    attr_accessor :char, :color, :alpha, :lit
 
-    def initialize(char, color, transparent = false, walkable = false)
+    def initialize(char, color, alpha = 1.0, transparent = false, walkable = false)
       @char = char
       @color = color
+      @alpha = alpha
       @walkable = !!walkable
       @transparent = !!transparent
       @lit = false
@@ -23,7 +24,7 @@ module Eugor
     end
 
     def inspect
-      "<#{self.class.name} #{char}, #{color}, #{walkable? ? 'walkable' : 'not walkable'}, #{transparent? ? 'transparent' : 'not transparent'}>"
+      "<#{self.class.name} #{char}, #{color}, #{alpha}, #{walkable? ? 'walkable' : 'not walkable'}, #{transparent? ? 'transparent' : 'not transparent'}>"
     end
 
     def to_s
@@ -38,12 +39,12 @@ module Eugor
       @transparent
     end
 
-    NULL =       Terrain.new(' ', Console::Color::BLACK,       true,  false)
-    AIR =        Terrain.new(' ', Console::Color::BLUE,        true,  false)
-    GROUND =     Terrain.new('.', Console::Color::WHITE,       true,  true)
-    WALL =       Terrain.new('#', Console::Color::WHITE,       false, false)
-    SOLID_DIRT = Terrain.new('#', Console::Color::DARK_ORANGE, false, false)
-    TREE =       Terrain.new('^', Console::Color::GREY,        false, false)
+    NULL = Terrain.new(' ', Console::Color::BLACK, 1.0, false, false)
+    AIR = Terrain.new(' ', Console::Color::LIGHT_BLUE, 0.05, true,  false)
+    GROUND = Terrain.new('.', Console::Color::LIGHT_BLUE, 0.05, true,  true)
+    WALL = Terrain.new('#', Console::Color::WHITE, 1.0, false, false)
+    SOLID_DIRT = Terrain.new('#', Console::Color::DARK_ORANGE,1.0, false, false)
+    TREE = Terrain.new('^', Console::Color::GREY, 1.0, false, false)
   end
 
   class Chunk
@@ -251,9 +252,9 @@ module Eugor
         spread ||= rand(3..15)
         height ||= rand(15..45)
 
-        pine_trunk = Terrain.new('#', Console::Color::DARK_ORANGE, false, false)
-        pine_leaf = Terrain.new('*', Console::Color::DARK_GREEN, false, true)
-        pine_leaf_snowed = Terrain.new('*', Console::Color::WHITE, false, true)
+        pine_trunk = Terrain.new('#', Console::Color::DARK_ORANGE, 1.0, false, false)
+        pine_leaf = Terrain.new('*', Console::Color::DARK_GREEN, 1.0, false, true)
+        pine_leaf_snowed = Terrain.new('*', Console::Color::WHITE, 1.0, false, true)
 
         leaf_start = 2
         snow_start = height - 10

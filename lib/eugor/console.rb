@@ -24,7 +24,6 @@ module Eugor
       )
       @dirty = []
       @all_dirty = false
-      @buffer = console_new(width, height)
 
       sys_set_fps(LIMIT_FPS)
     end
@@ -38,8 +37,8 @@ module Eugor
       console_put_char(@buffer, x, y, c.ord, BKGND_NONE)
     end
 
-    def dirty(v2)
-      @dirty << v2
+    def dirty(v3)
+      @dirty << v3
     end
 
     def all_dirty
@@ -48,22 +47,23 @@ module Eugor
 
     def paint(camera, map, actors)
       # draw
+      frame = nil
       if @all_dirty
-        frame = camera.frame(map, actors, nil)
+        frame = camera.north(map, actors, nil)
       elsif !@dirty.empty?
-        frame = camera.frame(map, actors, @dirty)
+        frame = camera.north(map, actors, @dirty)
       end
       console_blit(
         frame, 0, 0, camera.width, camera.depth,
-        @buffer, 0, 0,
-        1.0, 1.0
-      )
-      # flush
-      console_blit(
-        @buffer, 0, 0, width, height,
         nil, 0, 0,
         1.0, 1.0
-      )
+      ) unless frame.nil?
+      # flush
+      # console_blit(
+      #   @buffer, 0, 0, width, height,
+      #   nil, 0, 0,
+      #   1.0, 1.0
+      # )
       console_flush
       @all_dirty = false
       @dirty = []

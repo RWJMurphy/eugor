@@ -11,8 +11,8 @@ module Eugor
   class Game
     include Vector
 
-    SCREEN_WIDTH = 80
-    SCREEN_HEIGHT = 50
+    SCREEN_WIDTH = 30
+    SCREEN_HEIGHT = 20
 
     SURFACE_LEVEL = 4
 
@@ -34,7 +34,7 @@ module Eugor
       @logger.debug "Initializing camera"
       @camera = Camera.new(
         @player,
-        @player.location - Vector.v3(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 0),
+        @player.location,
         SCREEN_WIDTH, SCREEN_HEIGHT
       )
 
@@ -94,28 +94,40 @@ module Eugor
         when :ACTOR_MOVE
           delta = args.first
           target = @player.location + delta
+
           if @actors[target]
             @logger.debug "Player walked into #{@actors[target]}, ignoring move"
             next_state = @state
+
           elsif !@map[target].walkable?
             @logger.debug "Player walked into #{@map[target]}, ignoring move"
             next_state = @state
+
           else
             @actors.delete(@player.location)
             @console.dirty(@player.location)
+
             @player.location += delta
-            @console.dirty(@player.location)
+
             @actors[@player.location] = @player
+            @console.dirty(@player.location)
+
+            @camera.center.set_from!(@player.location)
+            @console.all_dirty
+
             next_state = :STATE_WORLD_TURN
           end
+
         when :CAMERA_MOVE
-          new_origin = args.first + @camera.origin
-          if new_origin.z >= 0 && new_origin.z < @map.height * Map::CHUNK_SIZE.z
-            @camera.origin.set_from!(new_origin)
+          new_center = args.first + @camera.center
+          if new_center.z >= 0 && new_center.z < @map.height * Map::CHUNK_SIZE.z
+            @camera.center.set_from!(new_center)
             @console.all_dirty
+
           else
-            @logger.warn "Tried to move camera out of bounds: #{new_origin}"
+            @logger.warn "Tried to move camera out of bounds: #{new_center}"
           end
+
           next_state = @state
         when :PLAYER_QUIT
           next_state = :STATE_QUIT
@@ -137,10 +149,13 @@ module Eugor
           actor = args.shift
           delta = args.shift
           target = actor.location + delta
+
           if @actors[target]
             @logger.debug "#{actor} walked into #{@actors[target]}, ignoring move"
+
           elsif !@map[target].walkable?
             @logger.debug "#{actor} walked into #{@map[target]}, ignoring move"
+
           else
             @actors.delete(actor.location)
             @console.dirty(actor.location)
@@ -148,6 +163,7 @@ module Eugor
             @console.dirty(actor.location)
             @actors[actor.location] = actor
           end
+
           next_state = :STATE_WORLD_TURN
         when :WORLD_TURN_ENDED
           @tick += 1
